@@ -1,0 +1,105 @@
+<div class="page">
+  <div class="container">
+
+    <div class="header">
+      <div class="logo">EVTC</div>
+      <div>
+        <h1 class="title">Calculadora de Investimentos</h1>
+        <p class="subtitle">Indexador Pós-Fixado · 252 dias úteis</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">Parâmetros da Aplicação</h2>
+      <div class="grid-3">
+        <div class="field">
+          <label class="label">Valor Aplicado (R$)</label>
+          <input class="input" type="number" [(ngModel)]="valorAplicado" step="0.01" />
+        </div>
+        <div class="field">
+          <label class="label">Data Inicial</label>
+          <input class="input" type="date" [(ngModel)]="dataInicial" />
+        </div>
+        <div class="field">
+          <label class="label">Data Final</label>
+          <input class="input" type="date" [(ngModel)]="dataFinal" />
+        </div>
+      </div>
+
+      @if (erro) {
+        <div class="erro">{{ erro }}</div>
+      }
+
+      <button class="btn" (click)="calcular()" [disabled]="loading">
+        {{ loading ? 'Calculando...' : 'Calcular' }}
+      </button>
+
+      <p class="nota">💡 Cotações disponíveis: 01/01/2025 a 31/01/2025 e 13/03/2025 a 21/03/2025</p>
+    </div>
+
+    @if (resultado) {
+      <div class="resumo-grid">
+        <div class="result-card" style="border-top: 3px solid #3b82f6">
+          <div class="result-label" style="color: #3b82f6">Valor Aplicado</div>
+          <div class="result-value">{{ formatarMoeda(resultado.valorAplicado) }}</div>
+        </div>
+        <div class="result-card destaque" style="border-top: 3px solid #10b981">
+          <div class="result-label" style="color: #10b981">Valor Atualizado</div>
+          <div class="result-value verde-escuro">{{ formatarMoeda(resultado.valorAtualizado) }}</div>
+        </div>
+        <div class="result-card" style="border-top: 3px solid #f59e0b">
+          <div class="result-label" style="color: #f59e0b">Rendimento</div>
+          <div class="result-value">{{ formatarMoeda(rendimento) }}</div>
+        </div>
+        <div class="result-card" style="border-top: 3px solid #8b5cf6">
+          <div class="result-label" style="color: #8b5cf6">Fator Acumulado</div>
+          <div class="result-value mono">{{ formatarFator(resultado.fatorAcumulado) }}</div>
+        </div>
+        <div class="result-card" style="border-top: 3px solid #6366f1">
+          <div class="result-label" style="color: #6366f1">Dias Úteis</div>
+          <div class="result-value">{{ resultado.diasUteis }}</div>
+        </div>
+        <div class="result-card" style="border-top: 3px solid #64748b">
+          <div class="result-label" style="color: #64748b">Período</div>
+          <div class="result-value periodo">{{ formatarData(resultado.dataInicial) }} → {{ formatarData(resultado.dataFinal) }}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Evolução Diária</h2>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Taxa Anual</th>
+                <th>Fator Diário</th>
+                <th>Fator Acumulado</th>
+                <th>Valor Atualizado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (detalhe of resultado.detalhes; track detalhe.dataReferencia; let i = $index) {
+                <tr [class.tr-odd]="i % 2 !== 0">
+                  <td>{{ formatarData(detalhe.dataReferencia) }}</td>
+                  <td>
+                    <span class="tag-taxa"
+                      [class.tag-alta]="detalhe.taxaAnual >= 12.5"
+                      [class.tag-media]="detalhe.taxaAnual >= 11 && detalhe.taxaAnual < 12.5"
+                      [class.tag-baixa]="detalhe.taxaAnual < 11">
+                      {{ detalhe.taxaAnual.toFixed(2) }}%
+                    </span>
+                  </td>
+                  <td class="mono">{{ detalhe.fatorDiario.toFixed(8) }}</td>
+                  <td class="mono">{{ formatarFator(detalhe.fatorAcumulado) }}</td>
+                  <td class="verde">{{ formatarMoeda(detalhe.valorAtualizado) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+  </div>
+</div>

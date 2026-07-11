@@ -11,7 +11,7 @@ API REST em .NET 8 para cálculo de saldo atualizado de aplicações com indexad
 | Banco de dados | SQLite + Dapper |
 | Logs | Serilog (console + arquivo) |
 | Testes | xUnit + FluentAssertions + Moq |
-| Frontend | React 18 |
+| Frontend | Angular 17 |
 | Container | Docker + docker-compose |
 
 ## Arquitetura
@@ -24,7 +24,7 @@ src/
 └── CalculadoraEVTC.API/             # Minimal API, Program.cs, Middleware
 tests/
 └── CalculadoraEVTC.Tests/           # Testes unitários (xUnit + FluentAssertions + Moq)
-frontend/                            # React SPA
+frontend/                            # Angular 17 SPA
 ```
 
 ## Regras de Negócio
@@ -43,7 +43,7 @@ truncado na 16ª casa decimal
 
 ### Valor Atualizado
 ```
-valor_atualizado = truncar(valor_aplicado × fator_acumulado, 8)
+valor_atualizado = truncar(valor_aplicado × fator_acumulado, 2)
 ```
 
 ### Regras de datas
@@ -57,8 +57,8 @@ valor_atualizado = truncar(valor_aplicado × fator_acumulado, 8)
 ```bash
 docker-compose up --build
 ```
-- API: http://localhost:5000
-- Swagger: http://localhost:5000/swagger
+- API: http://localhost:5001
+- Swagger: http://localhost:5001/swagger
 - Frontend: http://localhost:3000
 
 ### Sem Docker
@@ -69,12 +69,15 @@ cd src/CalculadoraEVTC.API
 dotnet run
 ```
 
+> O banco SQLite é criado e populado automaticamente na primeira execução.
+
 **Frontend:**
 ```bash
 cd frontend
 npm install
-npm run dev
+ng serve
 ```
+Acesse: http://localhost:4200
 
 **Testes:**
 ```bash
@@ -99,18 +102,18 @@ dotnet test --verbosity normal
 ```json
 {
   "valorAplicado": 10000.00,
-  "dataInicial": "2025-03-13",
-  "dataFinal": "2025-03-21",
-  "fatorAcumulado": 1.0027406329672200,
+  "dataInicial": "2025-03-13T00:00:00",
+  "dataFinal": "2025-03-21T00:00:00",
+  "fatorAcumulado": 1.0027406329672246,
   "valorAtualizado": 10027.40,
   "diasUteis": 6,
   "detalhes": [
     {
-      "dataReferencia": "2025-03-14",
-      "taxaAnual": 12.50,
+      "dataReferencia": "2025-03-14T00:00:00",
+      "taxaAnual": 12.00,
       "fatorDiario": 1.00044982,
       "fatorAcumulado": 1.0004498200000000,
-      "valorAtualizado": 10004.49
+      "valorAtualizado": 10004.50
     }
   ]
 }
@@ -123,21 +126,29 @@ dotnet test --verbosity normal
 - Data inicial deve ser dia útil
 - Cotação deve existir para todos os dias do período
 
+## Cotações disponíveis no banco
+
+O seed segue o script oficial fornecido no teste:
+- **Janeiro/2025:** 01/01 a 31/01
+- **Março/2025:** 13/03 a 21/03
+
 ## Logs
 
 Logs estruturados via Serilog:
-- Console em desenvolvimento
+- Console em tempo real
 - Arquivo rotativo em `logs/calculadora-YYYYMMDD.log`
 
 ## Exemplo validado
 
 Aplicação de R$10.000,00 de 13/03/2025 a 21/03/2025:
 
-| Data | Taxa Anual | Fator Diário | Fator Acumulado | Valor Atualizado |
-|------|-----------|-------------|----------------|-----------------|
-| 14/03 | 12,50% | 1,00044982 | 1,00044982 | R$ 10.004,49 |
-| 17/03 | 11,00% | 1,00041421 | 1,00091753 | R$ 10.009,17 |
-| 18/03 | 12,20% | 1,00041421 | 1,00133212 | R$ 10.013,32 |
-| 19/03 | 13,00% | 1,00045690 | 1,00178962 | R$ 10.017,89 |
-| 20/03 | 12,40% | 1,00048511 | 1,00227560 | R$ 10.022,75 |
-| 21/03 | 12,70% | 1,00046397 | 1,00274063 | R$ 10.027,40 |
+| Data | Fator Diário | Fator Acumulado | Valor Atualizado |
+|------|-------------|----------------|-----------------|
+| 14/03 | 1,00044982 | 1,00044982000000 | R$ 10.004,50 |
+| 17/03 | 1,00046750 | 1,00091753029085 | R$ 10.009,18 |
+| 18/03 | 1,00041421 | 1,00133212034107 | R$ 10.013,32 |
+| 19/03 | 1,00045690 | 1,00178962898685 | R$ 10.017,90 |
+| 20/03 | 1,00048511 | 1,00227560715377 | R$ 10.022,76 |
+| 21/03 | 1,00046397 | 1,00274063296722 | R$ 10.027,40 |
+
+> **Nota:** A taxa exibida em cada linha representa a cotação do dia útil anterior (D-1), conforme especificado no enunciado. O valor final de R$10.027,40 valida o cálculo conforme o exemplo do PDF.
