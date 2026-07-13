@@ -77,6 +77,13 @@ cd frontend
 npm install
 ng serve
 ```
+
+> **Atenção:** ao rodar sem Docker, altere a URL da API no arquivo `frontend/src/app/app.ts`:
+> ```typescript
+> // Troque 5001 por 5000
+> this.http.post<CalculoResponse>('http://localhost:5000/api/calcular', request)
+> ```
+
 Acesse: http://localhost:4200
 
 **Testes:**
