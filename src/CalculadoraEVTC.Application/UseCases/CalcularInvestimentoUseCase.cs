@@ -35,7 +35,7 @@ public class CalcularInvestimentoUseCase
         _logger.LogInformation("Total de dias úteis no período: {DiasUteis}", diasUteis.Count);
 
         var detalhes = new List<DetalhesDiarioDto>();
-        decimal fatorAcumulado = 1m;
+        var fatoresDiarios = new List<decimal>();
 
         foreach (var dia in diasUteis)
         {
@@ -45,8 +45,9 @@ public class CalcularInvestimentoUseCase
                 ?? throw new CotacaoNaoEncontradaException(diaAnterior);
 
             var fatorDiario = CalculadoraJurosService.CalcularFatorDiario(cotacao.Valor);
-            fatorAcumulado *= fatorDiario;
-            var fatorAcumuladoTruncado = CalculadoraJurosService.Truncar(fatorAcumulado, 16);
+            fatoresDiarios.Add(fatorDiario);
+
+            var fatorAcumuladoTruncado = CalculadoraJurosService.CalcularFatorAcumulado(fatoresDiarios);
             var valorAtualizado = CalculadoraJurosService.CalcularValorAtualizado(
                 request.ValorAplicado, fatorAcumuladoTruncado);
 
@@ -58,8 +59,9 @@ public class CalcularInvestimentoUseCase
                 dia, cotacao.Valor, fatorDiario, fatorAcumuladoTruncado, valorAtualizado));
         }
 
-        var fatorFinal = CalculadoraJurosService.Truncar(fatorAcumulado, 16);
-        var valorFinal = CalculadoraJurosService.Truncar(request.ValorAplicado * fatorFinal, 2);
+        var fatorFinal = CalculadoraJurosService.CalcularFatorAcumulado(fatoresDiarios);
+        var valorFinal = CalculadoraJurosService.CalcularValorAtualizado(
+            request.ValorAplicado, fatorFinal);
 
         _logger.LogInformation(
             "Cálculo concluído. FatorAcumulado: {FA}, ValorAtualizado: {VA}",
